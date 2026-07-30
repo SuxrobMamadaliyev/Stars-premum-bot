@@ -10,6 +10,7 @@ const { countryName, loadCustomCountries } = require('./countries');
 const { getSetting } = require('./settings');
 const userbot = require('./userbot');
 const heroSms = require('./heroSms');
+const contest = require('./contest');
 
 const { adminScene, showAdminPanel } = require('./adminScene');
 const { topupScene, showTopupMenu, approveTopup, creditStarsPayment } = require('./topupScene');
@@ -64,6 +65,7 @@ mongoose
 // Bot qayta ishga tushsa ham (Render uxlab qolishi / qayta deploy) pending aktivatsiyalarni
 // vaqti o'tgach avtomatik bekor qilib, pulni qaytarib turadi.
 startExpiryWatchdog(bot);
+contest.startContestScheduler(bot.telegram);
 tonPayment.startTonWatcher(bot); // TON blokcheynidagi to'lovlarni fonda kuzatib turadi
 
 // ---- Scenes ----
@@ -203,6 +205,45 @@ bot.action('referral_info', async ctx => {
     `🔗 Sizning referal havolangiz:\n<code>${refLink}</code>`,
     { parse_mode: 'HTML', ...backToMain() }
   );
+});
+
+// ================= KONKURS =================
+bot.action('contest_info', async ctx => {
+  await ctx.answerCbQuery();
+  const active = await contest.getActiveContest();
+  if (!active) {
+    return safeEdit(ctx,
+      "🏆 <b>Haftalik konkurs</b>\n\nKonkurs hozircha ishga tushmagan. Tez orada boshlanadi!",
+      { parse_mode: 'HTML', ...backToMain() }
+    );
+  }
+  const leaderboard = await contest.getLeaderboard(active, 10);
+  const msLeft = active.cycleEnd.getTime() - Date.now();
+  const daysLeft = Math.max(0, Math.floor(msLeft / (24 * 60 * 60 * 1000)));
+  const hoursLeft = Math.max(0, Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)));
+
+  let text = `🏆 <b>Haftalik referal konkursi</b>\n\n` +
+    `🎁 Sovg'a: <b>⭐ ${active.giftStarCount || '?'}</b> qiymatidagi gift\n` +
+    `⏳ Tugashiga: <b>${daysLeft} kun ${hoursLeft} soat</b>\n\n` +
+    `📋 Eng ko'p referal chaqirganlar:\n`;
+
+  if (!leaderboard.length) {
+    text += "\nHozircha hech kim referal chaqirmagan. Birinchi bo'ling!";
+  } else {
+    leaderboard.forEach((r, i) => {
+      const name = r.username ? '@' + r.username : (r.fullName || r.telegramId);
+      text += `${i + 1}. ${name} — <b>${r.gained}</b> ta referal\n`;
+    });
+  }
+
+  const user = await User.findOne({ telegramId: ctx.from.id });
+  const before = active.snapshot instanceof Map
+    ? (active.snapshot.get(String(ctx.from.id)) ?? 0)
+    : (active.snapshot?.[ctx.from.id] ?? 0);
+  const myGained = (user?.referralCount || 0) - before;
+  text += `\n👤 Sizning shu haftadagi natijangiz: <b>${myGained}</b> ta referal`;
+
+  await safeEdit(ctx, text, { parse_mode: 'HTML', ...backToMain() });
 });
 
 bot.action('help', async ctx => {
