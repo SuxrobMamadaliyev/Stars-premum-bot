@@ -13,6 +13,7 @@ const heroSms = require('./heroSms');
 
 const { adminScene, showAdminPanel } = require('./adminScene');
 const { topupScene, showTopupMenu, approveTopup, creditStarsPayment } = require('./topupScene');
+const { pixyScene } = require('./pixyScene');
 const tonPayment = require('./tonPayment');
 const {
   setBotInstance,
@@ -66,7 +67,7 @@ startExpiryWatchdog(bot);
 tonPayment.startTonWatcher(bot); // TON blokcheynidagi to'lovlarni fonda kuzatib turadi
 
 // ---- Scenes ----
-const stage = new Scenes.Stage([adminScene(), topupScene()]);
+const stage = new Scenes.Stage([adminScene(), topupScene(), pixyScene()]);
 bot.use(session());
 bot.use(stage.middleware());
 
@@ -158,7 +159,7 @@ bot.start(async ctx => {
     `👋 Assalomu alaykum, ${ctx.from.first_name}!\n\n` +
     `📱 Bu bot orqali turli xizmatlar uchun virtual raqamlar sotib olishingiz mumkin.\n\n` +
     `👛 Balansingiz: <b>${balance.toLocaleString()} so'm</b>\n\n` +
-    `🔥 Eng arzon takliflarni koʻrish uchun pastdagi tugmani bosing.`,
+    `📱 Raqam olish, ⭐ Stars yoki 💎 Premium sotib olish uchun pastdagi tugmalardan foydalaning.`,
     mainMenu(admin),
     { edit: false }
   );
@@ -209,8 +210,9 @@ bot.action('help', async ctx => {
   const support = await getSetting('support_username');
   await safeEdit(ctx, 
     `❓ <b>Yordam</b>\n\n` +
-    `🔥 "Arzon nomerlar" — davlatlar roʻyxati, eng arzonidan boshlab\n` +
     `📱 "Raqam olish" — davlatni tanlab virtual raqam sotib olish\n` +
+    `⭐ "Stars sotib olish" — Telegram Stars sotib olib istalgan userga yuborish\n` +
+    `💎 "Premium sotib olish" — Telegram Premium sotib olib istalgan userga yuborish\n` +
     `👤 "Kabinet" — balans va xaridlar tarixi\n` +
     `👛 "Balans to'ldirish" — Telegram Stars yoki karta orqali to'lov\n\n` +
     `💡 Raqam olgach, kod avtomatik kelib, shu yerga yuboriladi — hech narsa bosish shart emas.\n\n` +
@@ -261,9 +263,15 @@ bot.action(/^svcconfirm_([^:]+):(.+)$/, async ctx => {
   await handleServiceConfirm(ctx, ctx.match[1], ctx.match[2]);
 });
 
-// "🔥 Arzon nomerlar": barcha davlatlar to'g'ridan-to'g'ri (eng arzon xizmat bilan)
-bot.action('cheap_numbers', async ctx => {
-  await showCountries(ctx, { title: '🔥 <b>Eng arzon davlatlar</b>' });
+// ================= STARS / PREMIUM (Pixy API) =================
+bot.action('buy_stars', async ctx => {
+  await ctx.answerCbQuery();
+  await ctx.scene.enter('pixy_flow', { type: 'stars' });
+});
+
+bot.action('buy_premium', async ctx => {
+  await ctx.answerCbQuery();
+  await ctx.scene.enter('pixy_flow', { type: 'premium' });
 });
 
 bot.action(/^buycnt_(.+)$/, async ctx => {
