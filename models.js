@@ -93,4 +93,22 @@ const digitalOrderSchema = new mongoose.Schema({
 
 const DigitalOrder = mongoose.model('DigitalOrder', digitalOrderSchema);
 
-module.exports = { User, Settings, Activation, NumberAccount, TonInvoice, DigitalOrder };
+// ---- Haftalik referal konkursi ----
+const contestSchema = new mongoose.Schema({
+  cycleStart: { type: Date, required: true },
+  cycleEnd: { type: Date, required: true }, // cycleStart + 7 kun
+  giftId: String, // getAvailableGifts'dan tanlangan gift ID (~15 ⭐)
+  giftStarCount: Number,
+  // snapshot: konkurs boshlanishidagi referralCount qiymatlari — g'olibni
+  // aniqlashda shu haftada QO'SHILGAN referallarni hisoblash uchun.
+  snapshot: { type: Map, of: Number, default: {} },
+  status: { type: String, default: 'active' }, // active | completed | no_winner
+  winnerId: Number,
+  winnerReferrals: Number,
+  finishedAt: Date,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Contest = mongoose.model('Contest', contestSchema);
+
+module.exports = { User, Settings, Activation, NumberAccount, TonInvoice, DigitalOrder, Contest };
