@@ -20,9 +20,8 @@ const DEFAULTS = {
   custom_countries: [],         // Admin panel orqali qo'shilgan davlatlar: [{ code, name, heroName }]
   custom_services: [],          // Admin panel orqali qo'shilgan xizmatlar: [{ code, label }]
 
-  // ---- Pixy API orqali Stars / Premium sotish ----
-  pixy_api_url: '',            // Pixy.uz API bazaviy manzili (masalan: https://api.pixy.uz)
-  pixy_api_key: '',            // Pixy.uz API kaliti (token)
+  // ---- Pixy API (api.pixy.uz) orqali Stars / Premium sotish ----
+  pixy_wallet_seed: '',        // TON hamyon mnemonik fraza (12/24 so'z) — Pixy shu orqali to'lov qiladi
   stars_price_uzs: 150,        // Foydalanuvchiga 1 Stars necha so'mga sotiladi
   premium_prices: { '3': 150000, '6': 230000, '12': 380000 }, // Oy -> narx (so'mda)
 };
