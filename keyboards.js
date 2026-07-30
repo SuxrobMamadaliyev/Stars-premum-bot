@@ -113,8 +113,25 @@ function adminPanelKeyboard() {
     [Markup.button.callback('👥 Foydalanuvchilar / Balans', 'adm_balances')],
     [Markup.button.callback('🔍 Foydalanuvchini boshqarish', 'adm_user_search')],
     [Markup.button.callback('📣 Barchaga xabar yuborish', 'adm_broadcast')],
+    [styledButton('🎁 Gift yuborish', 'adm_gift', 'primary')],
     [Markup.button.callback('📊 Statistika', 'adm_stats')],
     [Markup.button.callback('🔙 Bosh menyu', 'back_main')],
+  ]);
+}
+
+// gifts: [{ id, star_count, ... }] — getAvailableGifts natijasi
+function giftListKeyboard(gifts) {
+  const rows = gifts.map(g => [
+    styledButton(`⭐ ${g.star_count} — gift`, `adm_gift_pick_${g.id}`, 'primary'),
+  ]);
+  rows.push([Markup.button.callback('🔙 Admin panel', 'admin_panel')]);
+  return Markup.inlineKeyboard(rows);
+}
+
+function giftConfirmKeyboard(giftId) {
+  return Markup.inlineKeyboard([
+    [styledButton('✅ Yuborish', `adm_gift_send_${giftId}`, 'success')],
+    [styledButton('❌ Bekor qilish', 'admin_panel', 'danger')],
   ]);
 }
 
@@ -370,4 +387,6 @@ module.exports = {
   premiumMonthsKeyboard,
   pixyRecipientKeyboard,
   pixyConfirmKeyboard,
+  giftListKeyboard,
+  giftConfirmKeyboard,
 };
