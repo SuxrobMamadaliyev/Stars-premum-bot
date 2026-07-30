@@ -14,6 +14,7 @@ function styledButton(text, data, style) {
 
 function mainMenu(isAdmin = false) {
   const rows = [
+    [styledButton('🏆 Konkurs', 'contest_info', 'primary')],
     [
       styledButton('📱 Raqam olish', 'buy_number', 'success'),
       styledButton('👤 Kabinet', 'cabinet', 'success'),
