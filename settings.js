@@ -19,6 +19,12 @@ const DEFAULTS = {
   ton_to_uzs: 0,                // 1 TON = ? so'm (0 bo'lsa TON orqali toʻldirish oʻchirilgan hisoblanadi)
   custom_countries: [],         // Admin panel orqali qo'shilgan davlatlar: [{ code, name, heroName }]
   custom_services: [],          // Admin panel orqali qo'shilgan xizmatlar: [{ code, label }]
+
+  // ---- Pixy API orqali Stars / Premium sotish ----
+  pixy_api_url: '',            // Pixy.uz API bazaviy manzili (masalan: https://api.pixy.uz)
+  pixy_api_key: '',            // Pixy.uz API kaliti (token)
+  stars_price_uzs: 150,        // Foydalanuvchiga 1 Stars necha so'mga sotiladi
+  premium_prices: { '3': 150000, '6': 230000, '12': 380000 }, // Oy -> narx (so'mda)
 };
 
 async function getSetting(key) {
