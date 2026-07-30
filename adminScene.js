@@ -15,11 +15,14 @@ const {
   cancelLoginKeyboard,
   userDetailKeyboard,
   styledButton,
+  giftListKeyboard,
+  giftConfirmKeyboard,
 } = require('./keyboards');
 const { User, Activation, NumberAccount } = require('./models');
 const { countryName, COUNTRIES, addCountry, removeCountry } = require('./countries');
 const userbot = require('./userbot');
 const heroSms = require('./heroSms');
+const gift = require('./gift');
 const { handleIncomingCode, POPULAR_SERVICES, addService, removeService } = require('./buyScene');
 
 // Admin panel asosiy ko'rinish
@@ -166,6 +169,7 @@ const waiting = {}; // telegramId -> { key, label, meta? }
 const waitingPhoto = {}; // telegramId -> true (rasm kutilmoqda)
 const pendingBroadcast = {}; // adminTelegramId -> { type: 'text'|'photo', text?, photo?, caption? }
 const pendingNewNumber = {}; // adminTelegramId -> { country } (login jarayonidagi raqam)
+const pendingGift = {}; // adminTelegramId -> { targetUserId, gifts: [...] } (gift yuborish jarayoni)
 
 // Har bir davlat bo'yicha mavjud/band/ishlatilgan raqamlar sonini hisoblaydi
 async function getCountrySummaries() {
@@ -304,6 +308,7 @@ function adminScene() {
       await ctx.answerCbQuery();
       delete waiting[ctx.from.id];
       delete waitingPhoto[ctx.from.id];
+      delete pendingGift[ctx.from.id];
       if (userbot.hasPendingLogin(ctx.from.id)) {
         await userbot.cancelLogin(ctx.from.id);
         delete pendingNewNumber[ctx.from.id];
@@ -313,6 +318,58 @@ function adminScene() {
 
     if (data === 'adm_hero_check') {
       return showHeroDiagnostics(ctx);
+    }
+
+    // ---- GIFT YUBORISH (bot Stars balansidan) ----
+
+    if (data === 'adm_gift') {
+      await ctx.answerCbQuery();
+      waiting[ctx.from.id] = {
+        key: '_gift_userid',
+        label: "🎁 Gift yuboriladigan foydalanuvchining Telegram ID raqamini kiriting:",
+      };
+      return ctx.reply(waiting[ctx.from.id].label, backToAdmin());
+    }
+
+    if (data.startsWith('adm_gift_pick_')) {
+      await ctx.answerCbQuery();
+      const giftId = data.slice('adm_gift_pick_'.length);
+      const state = pendingGift[ctx.from.id];
+      if (!state) {
+        return ctx.reply('❌ Jarayon topilmadi. Qaytadan boshlang.', backToAdmin());
+      }
+      const selected = state.gifts.find(g => g.id === giftId);
+      if (!selected) {
+        return ctx.reply('❌ Bu gift topilmadi. Qaytadan urinib koʻring.', backToAdmin());
+      }
+      state.giftId = giftId;
+      return safeEdit(
+        ctx,
+        `🎁 Tanlangan gift: ⭐ ${selected.star_count}\n` +
+          `👤 Qabul qiluvchi ID: <code>${state.targetUserId}</code>\n\n` +
+          `Yuborishni tasdiqlaysizmi? (bot balansidan ${selected.star_count} ⭐ yechiladi)`,
+        { parse_mode: 'HTML', ...giftConfirmKeyboard(giftId) }
+      );
+    }
+
+    if (data.startsWith('adm_gift_send_')) {
+      await ctx.answerCbQuery('⏳ Yuborilmoqda...');
+      const giftId = data.slice('adm_gift_send_'.length);
+      const state = pendingGift[ctx.from.id];
+      if (!state || state.giftId !== giftId) {
+        return ctx.reply('❌ Jarayon topilmadi. Qaytadan boshlang.', backToAdmin());
+      }
+      try {
+        await gift.sendGift(ctx.telegram, { userId: state.targetUserId, giftId });
+        delete pendingGift[ctx.from.id];
+        await ctx.reply('✅ Gift muvaffaqiyatli yuborildi!', backToAdmin());
+        try {
+          await ctx.telegram.sendMessage(state.targetUserId, '🎁 Sizga admin tomonidan gift yuborildi!');
+        } catch {}
+      } catch (e) {
+        await ctx.reply('❌ Gift yuborishda xato: ' + (e.description || e.message), backToAdmin());
+      }
+      return;
     }
 
     // ---- DAVLAT/XIZMAT KATALOGI ----
@@ -932,6 +989,27 @@ function adminScene() {
         return ctx.reply('❌ Login sessiyasi topilmadi. Qaytadan urinib koʻring.', backToAdmin());
       }
       return ctx.reply('⏳ Tekshirilmoqda...');
+    }
+
+    if (w.key === '_gift_userid') {
+      delete waiting[ctx.from.id];
+      const targetUserId = parseInt(ctx.message.text.trim().replace(/[^0-9]/g, ''), 10);
+      if (isNaN(targetUserId)) {
+        return ctx.reply("❌ Iltimos, to'g'ri Telegram ID kiriting.", backToAdmin());
+      }
+      try {
+        const gifts = await gift.getAvailableGifts(ctx.telegram);
+        if (!gifts.length) {
+          return ctx.reply('❌ Hozircha yuborish uchun mavjud gift yoʻq.', backToAdmin());
+        }
+        pendingGift[ctx.from.id] = { targetUserId, gifts };
+        return ctx.reply(
+          `🎁 <b>${targetUserId}</b> uchun gift tanlang:`,
+          { parse_mode: 'HTML', ...giftListKeyboard(gifts) }
+        );
+      } catch (e) {
+        return ctx.reply('❌ Gift roʻyxatini olishda xato: ' + (e.description || e.message), backToAdmin());
+      }
     }
 
     if (w.key === '_user_search') {
