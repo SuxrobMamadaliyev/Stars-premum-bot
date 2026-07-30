@@ -278,6 +278,15 @@ function adminScene() {
     adm_mindeposit: { key: 'min_balance_uzs',    label: "Minimal depozit (to'ldirish) summasini kiriting, so'mda (masalan: 5000)" },
     adm_tonwallet:  { key: 'ton_wallet_address', label: "TON hamyon manzilini kiriting (masalan: UQC...).\n❗️Toʻlovlar aynan shu manzilga kelishi kutiladi." },
     adm_tonrate:    { key: 'ton_to_uzs',         label: "1 TON necha soʻmligini kiriting (masalan: 25000)" },
+    adm_starsprice: { key: 'stars_price_uzs',    label: "Pixy orqali sotiladigan 1 ⭐ Stars narxini kiriting, so'mda (masalan: 150)" },
+    adm_premiumprices: {
+      key: '_premium_prices',
+      label: "Premium narxlarini kiriting.\nFormat: <code>oy:narx,oy:narx,...</code>\nMasalan: <code>3:150000,6:230000,12:380000</code>",
+    },
+    adm_pixyapi: {
+      key: '_pixy_api_combo',
+      label: "Pixy API manzili va kalitini kiriting.\nFormat: <code>API_URL|API_KEY</code>\nMasalan: <code>https://api.pixy.uz|abcd1234</code>",
+    },
     adm_proofchannel: {
       key: 'proof_channel',
       label: "Isbot kanali username kiriting (masalan: @kanalim).\n❗️Bot shu kanalda admin boʻlishi shart, aks holda postlar yuborilmaydi.\nOʻchirish uchun \"-\" belgisini yuboring.",
@@ -1037,6 +1046,32 @@ function adminScene() {
         await setSetting('card_number', cardNum);
         await setSetting('card_holder', cardHolder);
         await ctx.reply(`✅ Karta yangilandi:\n💳 ${cardNum}\n👤 ${cardHolder}`, backToAdmin());
+      } else if (w.key === '_premium_prices') {
+        const prices = {};
+        const parts = val.split(',').map(s => s.trim()).filter(Boolean);
+        for (const part of parts) {
+          const [months, price] = part.split(':').map(s => s.trim());
+          const m = parseInt(months, 10);
+          const p = parseFloat(price);
+          if (!m || isNaN(p) || p < 0) {
+            return ctx.reply("❌ Format xato! Masalan: 3:150000,6:230000,12:380000", backToAdmin());
+          }
+          prices[String(m)] = p;
+        }
+        if (!Object.keys(prices).length) {
+          return ctx.reply("❌ Kamida bitta narx kiriting.", backToAdmin());
+        }
+        await setSetting('premium_prices', prices);
+        const summary = Object.entries(prices).map(([m, p]) => `${m} oy — ${p.toLocaleString()} so'm`).join('\n');
+        await ctx.reply(`✅ Premium narxlari yangilandi:\n${summary}`, backToAdmin());
+      } else if (w.key === '_pixy_api_combo') {
+        const [apiUrl, apiKey] = val.split('|').map(s => s.trim());
+        if (!apiUrl || !apiKey) {
+          return ctx.reply("❌ Format xato! Qaytadan urinib ko'ring:\nAPI_URL|API_KEY", backToAdmin());
+        }
+        await setSetting('pixy_api_url', apiUrl);
+        await setSetting('pixy_api_key', apiKey);
+        await ctx.reply(`✅ Pixy API sozlamalari saqlandi:\n🌐 ${apiUrl}\n🔑 ${'*'.repeat(Math.max(apiKey.length - 4, 0))}${apiKey.slice(-4)}`, backToAdmin());
       } else if (w.key === '_channel_add') {
         let channel = val.trim();
         if (!channel.startsWith('@') && !channel.startsWith('https://t.me/')) {
@@ -1063,7 +1098,7 @@ function adminScene() {
         }
       } else {
         const numVal = parseFloat(val);
-        if (['markup_percent', 'usd_to_uzs', 'topup_fee_percent', 'star_to_uzs', 'referral_bonus_uzs', 'min_balance_uzs', 'ton_to_uzs'].includes(w.key)) {
+        if (['markup_percent', 'usd_to_uzs', 'topup_fee_percent', 'star_to_uzs', 'referral_bonus_uzs', 'min_balance_uzs', 'ton_to_uzs', 'stars_price_uzs'].includes(w.key)) {
           if (isNaN(numVal) || numVal < 0) {
             return ctx.reply("❌ Iltimos, to'g'ri raqam kiriting.", backToAdmin());
           }
