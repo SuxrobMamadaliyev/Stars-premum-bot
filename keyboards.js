@@ -14,10 +14,13 @@ function styledButton(text, data, style) {
 
 function mainMenu(isAdmin = false) {
   const rows = [
-    [styledButton('🔥 Arzon nomerlar', 'cheap_numbers', 'success')],
     [
       styledButton('📱 Raqam olish', 'buy_number', 'success'),
       styledButton('👤 Kabinet', 'cabinet', 'success'),
+    ],
+    [
+      styledButton('⭐ Stars sotib olish', 'buy_stars', 'primary'),
+      styledButton('💎 Premium sotib olish', 'buy_premium', 'primary'),
     ],
     [
       styledButton("👛 Balans to'ldirish", 'topup', 'success'),
@@ -93,6 +96,11 @@ function adminPanelKeyboard() {
       Markup.button.callback('💎 TON hamyon', 'adm_tonwallet'),
       Markup.button.callback('💎 TON kursi', 'adm_tonrate'),
     ],
+    [
+      Markup.button.callback('⭐ Stars narxi (Pixy)', 'adm_starsprice'),
+      Markup.button.callback('💎 Premium narxlari (Pixy)', 'adm_premiumprices'),
+    ],
+    [Markup.button.callback('🔑 Pixy API sozlamalari', 'adm_pixyapi')],
     [Markup.button.callback('🔢 Raqamlar bazasi', 'adm_numbers')],
     [Markup.button.callback('🌍➕ Davlat/Xizmat qoʻshish', 'adm_catalog')],
     [Markup.button.callback('🦸 HeroSMS tekshiruv', 'adm_hero_check')],
@@ -155,6 +163,47 @@ function balancesResetConfirmKeyboard() {
 
 function backToAdmin() {
   return Markup.inlineKeyboard([[Markup.button.callback('🔙 Admin panel', 'admin_panel')]]);
+}
+
+// ---- Pixy API: Stars / Premium sotib olish ----
+
+const STARS_OPTIONS = [50, 100, 250, 500, 1000];
+
+function starsAmountKeyboard(pricePerStar) {
+  const rows = STARS_OPTIONS.map(amount => [
+    styledButton(
+      `⭐ ${amount} — ${(amount * pricePerStar).toLocaleString()} so'm`,
+      `pixy_stars_amt_${amount}`,
+      'primary'
+    ),
+  ]);
+  rows.push([styledButton('✏️ Boshqa miqdor', 'pixy_stars_custom', 'primary')]);
+  rows.push([styledButton('❌ Bekor', 'back_main', 'danger')]);
+  return Markup.inlineKeyboard(rows);
+}
+
+function premiumMonthsKeyboard(prices) {
+  const rows = Object.entries(prices).map(([months, price]) => [
+    styledButton(`💎 ${months} oy — ${price.toLocaleString()} so'm`, `pixy_premium_m_${months}`, 'primary'),
+  ]);
+  rows.push([styledButton('❌ Bekor', 'back_main', 'danger')]);
+  return Markup.inlineKeyboard(rows);
+}
+
+function pixyRecipientKeyboard(selfUsername) {
+  const rows = [];
+  if (selfUsername) {
+    rows.push([styledButton(`👤 O'zimga (@${selfUsername})`, 'pixy_recipient_self', 'success')]);
+  }
+  rows.push([styledButton('❌ Bekor', 'back_main', 'danger')]);
+  return Markup.inlineKeyboard(rows);
+}
+
+function pixyConfirmKeyboard() {
+  return Markup.inlineKeyboard([
+    [styledButton('✅ Tasdiqlash va sotib olish', 'pixy_confirm', 'success')],
+    [styledButton('❌ Bekor qilish', 'back_main', 'danger')],
+  ]);
 }
 
 function backToMain() {
@@ -317,4 +366,8 @@ module.exports = {
   cancelLoginKeyboard,
   sendMainMenu,
   safeEdit,
+  starsAmountKeyboard,
+  premiumMonthsKeyboard,
+  pixyRecipientKeyboard,
+  pixyConfirmKeyboard,
 };
