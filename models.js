@@ -78,4 +78,19 @@ const tonInvoiceSchema = new mongoose.Schema({
 
 const TonInvoice = mongoose.model('TonInvoice', tonInvoiceSchema);
 
-module.exports = { User, Settings, Activation, NumberAccount, TonInvoice };
+// ---- Pixy API orqali sotilgan Stars / Premium buyurtmalari ----
+const digitalOrderSchema = new mongoose.Schema({
+  telegramId: { type: Number, required: true },
+  type: { type: String, required: true }, // 'stars' | 'premium'
+  recipientUsername: { type: String, required: true }, // @siz — kimga yuborilgani
+  quantity: { type: Number, required: true }, // stars soni yoki premium oy soni
+  priceUZS: { type: Number, required: true }, // foydalanuvchi balansidan yechilgan summa
+  status: { type: String, default: 'pending' }, // pending | success | failed | refunded
+  providerOrderId: String, // Pixy API qaytargan buyurtma ID'si
+  error: String,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const DigitalOrder = mongoose.model('DigitalOrder', digitalOrderSchema);
+
+module.exports = { User, Settings, Activation, NumberAccount, TonInvoice, DigitalOrder };
