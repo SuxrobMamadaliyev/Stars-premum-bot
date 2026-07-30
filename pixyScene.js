@@ -117,9 +117,10 @@ async function processPurchase(ctx) {
     await order.save();
 
     const label = w.type === 'stars' ? `⭐ ${w.quantity} Stars` : `💎 Telegram Premium — ${w.quantity} oy`;
+    const costLine = result.costTon ? `\n💎 Pixy xarajati: ~${result.costTon} TON` : '';
     await ctx.telegram.editMessageText(
       ctx.chat.id, waitMsg.message_id, undefined,
-      `✅ <b>Muvaffaqiyatli yuborildi!</b>\n\n${label}\n👤 @${w.recipient} ga yetkazildi.\n💰 Yechildi: ${w.priceUZS.toLocaleString()} so'm`,
+      `✅ <b>Muvaffaqiyatli yuborildi!</b>\n\n${label}\n👤 @${w.recipient} ga yetkazildi.\n💰 Yechildi: ${w.priceUZS.toLocaleString()} so'm${costLine}`,
       { parse_mode: 'HTML' }
     ).catch(() => {});
     await ctx.reply('🏠 Bosh menyu:', backToMain());
@@ -216,8 +217,11 @@ function pixyScene() {
 
     if (w.step === 'custom_amount') {
       const amount = parseInt(ctx.message.text.replace(/\D/g, ''), 10);
-      if (!amount || amount < 1) {
-        return ctx.reply("❌ Iltimos, to'g'ri son kiriting.");
+      if (!amount || amount < pixyApi.MIN_STARS) {
+        return ctx.reply(`❌ Iltimos, kamida ${pixyApi.MIN_STARS} dan katta son kiriting.`);
+      }
+      if (amount > pixyApi.MAX_STARS) {
+        return ctx.reply(`❌ Maksimal miqdor ${pixyApi.MAX_STARS.toLocaleString()} Stars.`);
       }
       const pricePerStar = await getSetting('stars_price_uzs');
       waiting[ctx.from.id] = { type: 'stars', quantity: amount, priceUZS: amount * pricePerStar, step: 'recipient' };
