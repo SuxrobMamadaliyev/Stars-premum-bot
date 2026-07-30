@@ -284,8 +284,11 @@ function adminScene() {
       label: "Premium narxlarini kiriting.\nFormat: <code>oy:narx,oy:narx,...</code>\nMasalan: <code>3:150000,6:230000,12:380000</code>",
     },
     adm_pixyapi: {
-      key: '_pixy_api_combo',
-      label: "Pixy API manzili va kalitini kiriting.\nFormat: <code>API_URL|API_KEY</code>\nMasalan: <code>https://api.pixy.uz|abcd1234</code>",
+      key: '_pixy_seed',
+      label:
+        "🔑 Pixy uchun TON hamyon seed-frazasini (mnemonik, 12/24 so'z) kiriting.\n\n" +
+        "❗️ DIQQAT: bu fraza hamyon ustidan to'liq nazorat beradi va shifrlanmagan holda saqlanadi. " +
+        "Faqat shu bot uchun alohida, oz mablag'li hamyon ishlating — asosiy hamyoningiz seed'ini bu yerga kiritmang.",
     },
     adm_proofchannel: {
       key: 'proof_channel',
@@ -1064,14 +1067,13 @@ function adminScene() {
         await setSetting('premium_prices', prices);
         const summary = Object.entries(prices).map(([m, p]) => `${m} oy — ${p.toLocaleString()} so'm`).join('\n');
         await ctx.reply(`✅ Premium narxlari yangilandi:\n${summary}`, backToAdmin());
-      } else if (w.key === '_pixy_api_combo') {
-        const [apiUrl, apiKey] = val.split('|').map(s => s.trim());
-        if (!apiUrl || !apiKey) {
-          return ctx.reply("❌ Format xato! Qaytadan urinib ko'ring:\nAPI_URL|API_KEY", backToAdmin());
+      } else if (w.key === '_pixy_seed') {
+        const words = val.trim().split(/\s+/);
+        if (words.length !== 12 && words.length !== 24) {
+          return ctx.reply("❌ Seed-fraza 12 yoki 24 so'zdan iborat bo'lishi kerak. Qaytadan urinib ko'ring.", backToAdmin());
         }
-        await setSetting('pixy_api_url', apiUrl);
-        await setSetting('pixy_api_key', apiKey);
-        await ctx.reply(`✅ Pixy API sozlamalari saqlandi:\n🌐 ${apiUrl}\n🔑 ${'*'.repeat(Math.max(apiKey.length - 4, 0))}${apiKey.slice(-4)}`, backToAdmin());
+        await setSetting('pixy_wallet_seed', val.trim());
+        await ctx.reply('✅ Pixy TON hamyon seed-frazasi saqlandi.', backToAdmin());
       } else if (w.key === '_channel_add') {
         let channel = val.trim();
         if (!channel.startsWith('@') && !channel.startsWith('https://t.me/')) {
