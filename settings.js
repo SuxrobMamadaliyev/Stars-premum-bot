@@ -6,7 +6,8 @@ const DEFAULTS = {
   topup_fee_percent: 3,        // Balans to'ldirishda ushlab qolinadigan komissiya (%)
   star_to_uzs: 100,            // 1 Telegram Star = ? so'm (Stars orqali to'ldirishda balansga shu kursda qo'shiladi)
   min_balance_uzs: 5000,       // Minimal depozit (to'ldirish) summasi (so'm)
-  referral_bonus_uzs: 100,     // Referal uchun bonus (so'm) — yangi foydalanuvchi majburiy kanallarga aʼzo boʻlgach beriladi
+  referral_deposit_points: 10,  // Majburiy kanallarga aʼzo boʻlgan YANGI foydalanuvchi uchun referalga beriladigan BALL (depozit shart emas)
+  referral_purchase_points: 3,  // Taklif qilingan foydalanuvchi har safar biror narsa sotib olganda referalga beriladigan BALL
   card_number: '9860 1678 4936 3665',
   card_holder: 'Suhrob M',
   support_username: '@suxacyber404',
