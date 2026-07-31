@@ -260,8 +260,8 @@ bot.action('help', async ctx => {
   await safeEdit(ctx, 
     `❓ <b>Yordam</b>\n\n` +
     `📱 "Raqam olish" — davlatni tanlab virtual raqam sotib olish\n` +
-    `⭐ "Stars sotib olish" — Telegram Stars sotib olib istalgan userga yuborish\n` +
-    `💎 "Premium sotib olish" — Telegram Premium sotib olib istalgan userga yuborish\n` +
+    `⭐ "Stars olish" — Telegram Stars sotib olib istalgan userga yuborish\n` +
+    `💎 "Premium olish" — Telegram Premium sotib olib istalgan userga yuborish\n` +
     `👤 "Kabinet" — balans va xaridlar tarixi\n` +
     `👛 "Balans to'ldirish" — Telegram Stars yoki karta orqali to'lov\n\n` +
     `💡 Raqam olgach, kod avtomatik kelib, shu yerga yuboriladi — hech narsa bosish shart emas.\n\n` +
