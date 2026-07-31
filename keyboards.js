@@ -106,9 +106,10 @@ function adminPanelKeyboard() {
     [Markup.button.callback('🌍➕ Davlat/Xizmat qoʻshish', 'adm_catalog')],
     [Markup.button.callback('🦸 HeroSMS tekshiruv', 'adm_hero_check')],
     [
-      Markup.button.callback('🎁 Referal bonusi', 'adm_refbonus'),
-      Markup.button.callback('💵 Minimal depozit', 'adm_mindeposit'),
+      Markup.button.callback('🎁 Referal balli (obuna)', 'adm_refbonus'),
+      Markup.button.callback('🛒 Referal balli (xarid)', 'adm_refpurchase'),
     ],
+    [Markup.button.callback('💵 Minimal depozit', 'adm_mindeposit')],
     [Markup.button.callback('🧾 Isbot kanali', 'adm_proofchannel')],
     [Markup.button.callback('🖼 Bosh menyu rasmi', 'adm_image')],
     [Markup.button.callback('👥 Foydalanuvchilar / Balans', 'adm_balances')],
