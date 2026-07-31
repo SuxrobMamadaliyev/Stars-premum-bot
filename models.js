@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
   referredBy: Number,
   pendingReferrer: Number, // /start orqali kelgan referal ID — majburiy kanallarga aʼzo boʻlgach tasdiqlanadi
   referralCount: { type: Number, default: 0 },
-  referralBonusGiven: { type: Boolean, default: false }, // taklif qilingan foydalanuvchi uchun bonus allaqachon berilganmi (ilk depozitda)
+  points: { type: Number, default: 0 }, // Referal balllari — konkursda ishlatiladi (so'm bonus emas)
   isBanned: { type: Boolean, default: false },
   bannedAt: Date,
   createdAt: { type: Date, default: Date.now },
