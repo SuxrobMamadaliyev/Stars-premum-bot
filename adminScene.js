@@ -46,7 +46,8 @@ async function showAdminPanel(ctx) {
     `💳 Karta: <b>${s.card_number}</b>\n` +
     `👤 Egasi: <b>${s.card_holder}</b>\n` +
     `📢 Majburiy kanallar: <b>${channels.length ? channels.length + ' ta' : 'oʻchirilgan'}</b>\n` +
-    `🎁 Referal bonusi: <b>${(s.referral_bonus_uzs || 0).toLocaleString()} so'm</b>\n` +
+    `🎁 Referal balli (obuna): <b>${s.referral_deposit_points || 0} ball</b>\n` +
+    `🛒 Referal balli (xarid): <b>${s.referral_purchase_points || 0} ball</b>\n` +
     `💵 Minimal depozit: <b>${(s.min_balance_uzs || 0).toLocaleString()} so'm</b>\n` +
     `💎 TON hamyon: <b>${s.ton_wallet_address || 'oʻrnatilmagan'}</b>\n` +
     `💎 TON kursi: <b>${s.ton_to_uzs ? '1 TON = ' + s.ton_to_uzs.toLocaleString() + " so'm" : 'oʻrnatilmagan (oʻchirilgan)'}</b>\n` +
@@ -278,7 +279,8 @@ function adminScene() {
     adm_starsrate:  { key: 'star_to_uzs',        label: "1 Telegram Star necha so'mligini kiriting (masalan: 220)" },
     adm_card:       { key: '_card_combo',        label: 'Karta raqami va egasini kiriting:\nFormat: KARTA_RAQAMI|Ism Familiya\nMasalan: 8600 1234 5678 9012|Karimov Karim' },
     adm_support:    { key: 'support_username',   label: 'Support username kiriting (masalan: @admin_support)' },
-    adm_refbonus:   { key: 'referral_bonus_uzs', label: "Referal uchun beriladigan bonus miqdorini kiriting, so'mda (masalan: 100)" },
+    adm_refbonus:   { key: 'referral_deposit_points', label: "Majburiy kanallarga aʼzo boʻlgan YANGI foydalanuvchi uchun beriladigan BALL miqdorini kiriting (masalan: 10)" },
+    adm_refpurchase:{ key: 'referral_purchase_points', label: 'Har bir xarid uchun beriladigan BALL miqdorini kiriting (masalan: 3)' },
     adm_mindeposit: { key: 'min_balance_uzs',    label: "Minimal depozit (to'ldirish) summasini kiriting, so'mda (masalan: 5000)" },
     adm_tonwallet:  { key: 'ton_wallet_address', label: "TON hamyon manzilini kiriting (masalan: UQC...).\n❗️Toʻlovlar aynan shu manzilga kelishi kutiladi." },
     adm_tonrate:    { key: 'ton_to_uzs',         label: "1 TON necha soʻmligini kiriting (masalan: 25000)" },
@@ -1178,7 +1180,7 @@ function adminScene() {
         }
       } else {
         const numVal = parseFloat(val);
-        if (['markup_percent', 'usd_to_uzs', 'topup_fee_percent', 'star_to_uzs', 'referral_bonus_uzs', 'min_balance_uzs', 'ton_to_uzs', 'stars_price_uzs'].includes(w.key)) {
+        if (['markup_percent', 'usd_to_uzs', 'topup_fee_percent', 'star_to_uzs', 'referral_deposit_points', 'referral_purchase_points', 'min_balance_uzs', 'ton_to_uzs', 'stars_price_uzs'].includes(w.key)) {
           if (isNaN(numVal) || numVal < 0) {
             return ctx.reply("❌ Iltimos, to'g'ri raqam kiriting.", backToAdmin());
           }
