@@ -4,7 +4,6 @@ const { getAllSettings } = require('./settings');
 const { backToMain, safeEdit, styledButton } = require('./keyboards');
 const { ADMIN_IDS } = require('./admin');
 const tonPayment = require('./tonPayment');
-const { tryGrantReferralDepositBonus } = require('./referral');
 
 // Waiting state: telegramId -> { step, method, amount, fee, credited }
 const waiting = {};
@@ -280,7 +279,6 @@ async function approveTopup(ctx, targetUserId, credited, fee) {
   } catch (e) {
     console.error('Foydalanuvchiga xabar yuborishda xato:', e.message);
   }
-  await tryGrantReferralDepositBonus(targetUserId, credited, ctx.telegram);
   return updated;
 }
 
@@ -297,7 +295,6 @@ async function creditStarsPayment(ctx, telegramId, amountUZS, starsCount) {
     `➕ Balansga qo'shildi: <b>${amountUZS.toLocaleString()} so'm</b>`,
     { parse_mode: 'HTML', ...backToMain() }
   );
-  await tryGrantReferralDepositBonus(telegramId, amountUZS, ctx.telegram);
 }
 
 module.exports = { topupScene, showTopupMenu, approveTopup, calcFee, creditStarsPayment };
