@@ -11,6 +11,7 @@ const { getSetting } = require('./settings');
 const userbot = require('./userbot');
 const heroSms = require('./heroSms');
 const contest = require('./contest');
+const { tryGrantReferralSignupPoints } = require('./referral');
 
 const { adminScene, showAdminPanel } = require('./adminScene');
 const { topupScene, showTopupMenu, approveTopup, creditStarsPayment } = require('./topupScene');
@@ -124,10 +125,9 @@ bot.use(async (ctx, next) => {
 // ---- Majburiy kanal obunasi tekshiruvi ----
 bot.use(requireChannelSub);
 
-// ---- Referal bog'lanishini tasdiqlash: faqat majburiy kanallarga aʼzo boʻlgan foydalanuvchiga ----
-// Eslatma: bonus bu yerda BERILMAYDI. Bonus endi faqat taklif qilingan foydalanuvchi ilk marta
-// minimal depozit miqdorida balans to'ldirganda beriladi (qarang: referral.js -> tryGrantReferralDepositBonus,
-// bu funksiya topupScene.js va tonPayment.js ichida haqiqiy to'lov tasdiqlangan joylarda chaqiriladi).
+// ---- Referal bog'lanishini tasdiqlash: faqat majburiy kanallarga aʼzo boʻlgan yangi foydalanuvchiga ----
+// Ball aynan SHU YERDA beriladi — depozit yoki xarid shart emas, faqat majburiy
+// kanallarga aʼzo boʻlgan yangi foydalanuvchi yetarli (qarang: referral.js -> tryGrantReferralSignupPoints).
 async function confirmReferralLink(ctx) {
   if (!ctx.from) return;
   const user = await User.findOne(
@@ -137,11 +137,16 @@ async function confirmReferralLink(ctx) {
   if (!user || !user.pendingReferrer || user.referredBy) return;
 
   const refId = user.pendingReferrer;
-  // Atomik: faqat hali referredBy o'rnatilmagan bo'lsa tasdiqlaymiz (qayta yozilmasligi uchun)
-  await User.findOneAndUpdate(
+  // Atomik: faqat hali referredBy o'rnatilmagan bo'lsa tasdiqlaymiz (qayta yozilmasligi va
+  // ballning ikki marta berilmasligi uchun)
+  const updated = await User.findOneAndUpdate(
     { telegramId: ctx.from.id, referredBy: { $exists: false } },
-    { $set: { referredBy: refId }, $unset: { pendingReferrer: '' } }
+    { $set: { referredBy: refId }, $unset: { pendingReferrer: '' } },
+    { new: true }
   );
+  if (!updated) return;
+
+  await tryGrantReferralSignupPoints(ctx.from.id, refId, ctx.telegram);
 }
 
 bot.use(async (ctx, next) => {
@@ -193,15 +198,18 @@ bot.action('back_main', async ctx => {
 bot.action('referral_info', async ctx => {
   await ctx.answerCbQuery();
   const user = await User.findOne({ telegramId: ctx.from.id });
-  const bonus = await getSetting('referral_bonus_uzs');
+  const signupPoints = await getSetting('referral_deposit_points');
+  const purchasePoints = await getSetting('referral_purchase_points');
   const refLink = `https://t.me/${ctx.botInfo.username}?start=${ctx.from.id}`;
 
   await safeEdit(ctx,
     `🎁 <b>Referal dasturi</b>\n\n` +
-    `Doʻstlaringizni taklif qiling va bonus yigʻing!\n\n` +
-    `💰 Bonus: <b>${bonus.toLocaleString()} so'm</b> — har bir yangi foydalanuvchi uchun\n` +
-    `👥 Sizning referallaringiz: <b>${user?.referralCount || 0}</b>\n\n` +
-    `ℹ️ Bonus faqat taklif qilingan foydalanuvchi ilk marta minimal depozit miqdorida (kamida ${(await getSetting('min_balance_uzs')).toLocaleString()} so'm) balans to'ldirgandan keyin beriladi.\n\n` +
+    `Doʻstlaringizni taklif qiling va BALL yigʻing — ball bilan haftalik konkursda gʻolib boʻlasiz!\n\n` +
+    `⭐ Yangi foydalanuvchi majburiy kanallarga aʼzo boʻlsa: <b>${signupPoints} ball</b>\n` +
+    `⭐ Har bir xariddan: <b>${purchasePoints} ball</b>\n\n` +
+    `👥 Referallaringiz soni: <b>${user?.referralCount || 0}</b>\n` +
+    `🏅 Jami ballaringiz: <b>${user?.points || 0}</b>\n\n` +
+    `ℹ️ Obuna balli taklif qilingan foydalanuvchi majburiy kanallarga aʼzo boʻlgach darhol beriladi — depozit shart emas. Xarid balli esa u har safar biror narsa sotib olganda beriladi.\n\n` +
     `🔗 Sizning referal havolangiz:\n<code>${refLink}</code>`,
     { parse_mode: 'HTML', ...backToMain() }
   );
@@ -225,14 +233,14 @@ bot.action('contest_info', async ctx => {
   let text = `🏆 <b>Haftalik referal konkursi</b>\n\n` +
     `🎁 Sovg'a: <b>⭐ ${active.giftStarCount || '?'}</b> qiymatidagi gift\n` +
     `⏳ Tugashiga: <b>${daysLeft} kun ${hoursLeft} soat</b>\n\n` +
-    `📋 Eng ko'p referal chaqirganlar:\n`;
+    `📋 Eng ko'p ball yig'ganlar:\n`;
 
   if (!leaderboard.length) {
-    text += "\nHozircha hech kim referal chaqirmagan. Birinchi bo'ling!";
+    text += "\nHozircha hech kim ball yig'magan. Birinchi bo'ling!";
   } else {
     leaderboard.forEach((r, i) => {
       const name = r.username ? '@' + r.username : (r.fullName || r.telegramId);
-      text += `${i + 1}. ${name} — <b>${r.gained}</b> ta referal\n`;
+      text += `${i + 1}. ${name} — <b>${r.gained}</b> ball\n`;
     });
   }
 
@@ -240,8 +248,8 @@ bot.action('contest_info', async ctx => {
   const before = active.snapshot instanceof Map
     ? (active.snapshot.get(String(ctx.from.id)) ?? 0)
     : (active.snapshot?.[ctx.from.id] ?? 0);
-  const myGained = (user?.referralCount || 0) - before;
-  text += `\n👤 Sizning shu haftadagi natijangiz: <b>${myGained}</b> ta referal`;
+  const myGained = (user?.points || 0) - before;
+  text += `\n👤 Sizning shu haftadagi natijangiz: <b>${myGained}</b> ball`;
 
   await safeEdit(ctx, text, { parse_mode: 'HTML', ...backToMain() });
 });
