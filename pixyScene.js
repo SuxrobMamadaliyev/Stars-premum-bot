@@ -11,6 +11,7 @@ const {
   pixyConfirmKeyboard,
 } = require('./keyboards');
 const pixyApi = require('./pixyApi');
+const { tryGrantReferralPurchasePoints } = require('./referral');
 
 // Har bir foydalanuvchi uchun joriy holat: { type, quantity, priceUZS, recipient, step }
 const waiting = {};
@@ -19,7 +20,7 @@ async function showStarsMenu(ctx) {
   const pricePerStar = await getSetting('stars_price_uzs');
   waiting[ctx.from.id] = { type: 'stars', step: 'choose_amount' };
   const text =
-    `⭐ <b>Telegram Stars sotib olish</b>\n\n` +
+    `⭐ <b>Telegram Stars olish</b>\n\n` +
     `ℹ️ Narx: 1 ⭐ = <b>${pricePerStar.toLocaleString()} so'm</b>\n\n` +
     `Miqdorni tanlang:`;
   if (ctx.callbackQuery) {
@@ -33,7 +34,7 @@ async function showPremiumMenu(ctx) {
   const prices = await getSetting('premium_prices');
   waiting[ctx.from.id] = { type: 'premium', step: 'choose_months' };
   const text =
-    `💎 <b>Telegram Premium sotib olish</b>\n\n` +
+    `💎 <b>Telegram Premium olish</b>\n\n` +
     `Muddatni tanlang:`;
   if (ctx.callbackQuery) {
     await safeEdit(ctx, text, { parse_mode: 'HTML', ...premiumMonthsKeyboard(prices) });
@@ -91,6 +92,7 @@ async function processPurchase(ctx) {
   if (!deducted) {
     return ctx.reply('❌ Balansingiz yetarli emas.', backToMain());
   }
+  await tryGrantReferralPurchasePoints(ctx.from.id, ctx.telegram);
 
   const order = await DigitalOrder.create({
     telegramId: ctx.from.id,
