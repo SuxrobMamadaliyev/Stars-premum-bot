@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { TonInvoice, User } = require('./models');
 const { getSetting } = require('./settings');
-const { tryGrantReferralDepositBonus } = require('./referral');
 
 const TONCENTER_API = 'https://toncenter.com/api/v2/getTransactions';
 const POLL_INTERVAL_MS = 15 * 1000;        // 15 soniyada bir marta tekshiradi
@@ -119,7 +118,6 @@ async function checkPendingInvoices() {
         { upsert: true }
       );
 
-      await tryGrantReferralDepositBonus(match.telegramId, match.amountUZS, botInstance?.telegram);
 
       if (botInstance) {
         try {
