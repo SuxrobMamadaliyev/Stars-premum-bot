@@ -20,8 +20,8 @@ function mainMenu(isAdmin = false) {
       styledButton('👤 Kabinet', 'cabinet', 'success'),
     ],
     [
-      styledButton('⭐ Stars sotib olish', 'buy_stars', 'primary'),
-      styledButton('💎 Premium sotib olish', 'buy_premium', 'primary'),
+      styledButton('⭐ Stars olish', 'buy_stars', 'primary'),
+      styledButton('💎 Premium olish', 'buy_premium', 'primary'),
     ],
     [
       styledButton("👛 Balans to'ldirish", 'topup', 'success'),
